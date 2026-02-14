@@ -1,16 +1,15 @@
 //! Logging backend that writes to the secure world PL011 UART.
 
 use crate::driver::pl011::Pl011;
+use crate::platform;
 use core::fmt::Write;
 use core::sync::atomic::{AtomicBool, Ordering};
 use log::Level;
 use spin::Mutex;
 
-/// Base address of the secure world PL011 UART on the QEMU virt machine.
-const UART1_BASE: usize = 0x0904_0000;
-
-// SAFETY: this is the base address of the secure world PL011 UART on the QEMU virt machine.
-static UART1: Mutex<Pl011> = Mutex::new(unsafe { Pl011::new(UART1_BASE) });
+// SAFETY: the base address is defined in the platform module for the target platform and used
+// solely for logging through the logger.
+static UART1: Mutex<Pl011> = Mutex::new(unsafe { Pl011::new(platform::UART1_BASE) });
 static LOGGER: Logger = Logger;
 static INITIALIZED: AtomicBool = AtomicBool::new(false);
 

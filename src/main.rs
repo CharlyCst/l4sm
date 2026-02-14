@@ -3,6 +3,7 @@
 
 mod driver;
 mod logger;
+mod platform;
 
 use core::arch::global_asm;
 
