@@ -1,6 +1,6 @@
 //! Logging backend that writes to the secure world PL011 UART.
 
-use crate::pl011::Pl011;
+use crate::driver::pl011::Pl011;
 use core::fmt::Write;
 use core::sync::atomic::{AtomicBool, Ordering};
 use log::Level;

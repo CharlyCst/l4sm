@@ -1,8 +1,8 @@
 #![no_std]
 #![no_main]
 
+mod driver;
 mod logger;
-mod pl011;
 
 use core::arch::global_asm;
 
