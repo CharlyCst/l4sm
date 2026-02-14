@@ -23,7 +23,8 @@ fn main() -> ! {
 // ————————————————————————————— Panic Handler —————————————————————————————— //
 
 #[panic_handler]
-fn panic(_info: &core::panic::PanicInfo) -> ! {
+fn panic(info: &core::panic::PanicInfo) -> ! {
+    log::error!("{info}");
     loop {
         core::hint::spin_loop();
     }
