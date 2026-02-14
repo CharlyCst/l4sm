@@ -1,10 +1,10 @@
 #![no_std]
 #![no_main]
 
+mod logger;
 mod pl011;
 
 use core::arch::global_asm;
-use core::fmt::Write;
 
 const STACK_SIZE: usize = 16 * 1024;
 
@@ -12,9 +12,8 @@ const STACK_SIZE: usize = 16 * 1024;
 
 #[unsafe(no_mangle)]
 fn main() -> ! {
-    // SAFETY: this is the base address of the secure world PL011 UART on the QEMU virt machine.
-    let mut uart = unsafe { pl011::Pl011::new(0x0904_0000) };
-    let _ = writeln!(uart, "Hello, world!");
+    logger::init();
+    log::info!("Hello, world!");
 
     loop {
         core::hint::spin_loop();

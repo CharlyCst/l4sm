@@ -4,6 +4,8 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+log = "0.4.29"
+spin = { version = "0.10.0", default-features = false, features = ["mutex", "spin_mutex"] }
 
 [profile.dev]
 panic = "abort"
