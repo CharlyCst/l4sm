@@ -1,0 +1,14 @@
+[package]
+name = "l4sm"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+
+[profile.dev]
+panic = "abort"
+opt-level = 3
+
+[profile.release]
+panic = "abort"
+codegen-units = 1
