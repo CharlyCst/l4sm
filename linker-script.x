@@ -1,5 +1,8 @@
 SECTIONS
 {
+  /* Not needed with panic=abort, and would end up before .text in the flat binary */
+  /DISCARD/ : { *(.eh_frame*) }
+
   /* Start address */
   . = 0x0e090000; /* We use the same address as RF-A on QEMU */
 
