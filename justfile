@@ -26,6 +26,26 @@ run:
       -display none \
       -bios bl1.bin
 
+# Start QEMU but wait for GDB to connect
+debug:
+    @just build
+    cd artifacts && qemu-system-aarch64 \
+      -machine virt,gic-version=3,secure=on,virtualization=on \
+      -cpu max \
+      -m 1204M \
+      -chardev stdio,signal=off,mux=on,id=char0 \
+      -monitor chardev:char0 \
+      -serial chardev:char0 -serial chardev:char0 \
+      -semihosting-config enable=on,target=native \
+      -gdb tcp:localhost:1234 \
+      -display none \
+      -bios bl1.bin \
+      -S
+
+# Start a GDB session
+gdb:
+    gdb -x ./setup.gdb
+
 # Download the binary artifacts
 setup:
     mkdir -p artifacts

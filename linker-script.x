@@ -1,7 +1,7 @@
 SECTIONS
 {
   /* Start address */
-  . = 0x1000; /* TODO: figure out what should be the start address */
+  . = 0x0e090000; /* We use the same address as RF-A on QEMU */
 
   /* Output a text section, starting with the entry point */
   .text : ALIGN(0x4) {
