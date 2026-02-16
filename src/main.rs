@@ -1,6 +1,7 @@
 #![no_std]
 #![no_main]
 
+mod arch;
 mod driver;
 mod logger;
 mod platform;
@@ -15,6 +16,11 @@ const STACK_SIZE: usize = 16 * 1024;
 fn main() -> ! {
     logger::init();
     log::info!("Hello, world!");
+    arch::feature::log_features();
+
+    if !arch::feature::has_rme() {
+        panic!("Hardware does not support RME");
+    }
 
     loop {
         core::hint::spin_loop();
