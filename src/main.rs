@@ -22,9 +22,7 @@ fn main() -> ! {
         panic!("Hardware does not support RME");
     }
 
-    loop {
-        core::hint::spin_loop();
-    }
+    platform::exit_success();
 }
 
 // ————————————————————————————— Panic Handler —————————————————————————————— //
@@ -32,9 +30,7 @@ fn main() -> ! {
 #[panic_handler]
 fn panic(info: &core::panic::PanicInfo) -> ! {
     log::error!("{info}");
-    loop {
-        core::hint::spin_loop();
-    }
+    platform::exit_failure();
 }
 
 // —————————————————————————— Assembly Entry Point —————————————————————————— //
