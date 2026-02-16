@@ -3,6 +3,10 @@
 version = 4
 
 [[package]]
+name = "capability"
+version = "0.1.0"
+
+[[package]]
 name = "l4sm"
 version = "0.1.0"
 dependencies = [
