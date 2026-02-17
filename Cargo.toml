@@ -5,14 +5,19 @@ members = [
     "capability"
 ]
 
+[workspace.dependencies]
+thiserror = "2.0.18"
+log = "0.4.29"
+spin = { version = "0.10.0", default-features = false, features = ["mutex", "spin_mutex"] }
+
 [package]
 name = "l4sm"
 version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-log = "0.4.29"
-spin = { version = "0.10.0", default-features = false, features = ["mutex", "spin_mutex"] }
+log = { workspace = true }
+spin = { workspace = true }
 
 [profile.dev]
 panic = "abort"

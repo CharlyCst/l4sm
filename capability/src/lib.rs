@@ -2,7 +2,32 @@
 //!
 //! L4sm is inspired by seL4"s design.
 
+use thiserror::Error;
+
+// ——————————————————————————————— Constants ———————————————————————————————— //
+
+/// Size of a frame as a power of two.
+///
+/// Note: on Arm the frame size is configurable. 4kiB is the minimal size, but we might want to
+/// make this configurable in the future.
 const FRAME_SIZE_EXPONENT: u8 = 12;
+
+// ————————————————————————————————— Errors ————————————————————————————————— //
+
+/// Capability operation error.
+#[derive(Error, Debug)]
+pub enum CapaError {
+    #[error("untyped memory capabilities is already split")]
+    UntypedAlreadySplit,
+    #[error("untyped memory has already allocated objects")]
+    UntypedAlreadyInUse,
+    #[error("untyped memory can't be split further thant its current size")]
+    UntypedCantSplitFurther,
+    #[error("untyped memory doest have enough free space")]
+    UntypedOutOfSpace,
+}
+
+// —————————————————————————————— Capabilities —————————————————————————————— //
 
 /// A capability index, represents an address in capability space (CSpace).
 #[repr(transparent)]
@@ -64,11 +89,11 @@ impl UntypedCapa {
     /// Size is in bytes, alignment a power of two.
     ///
     /// The returned address is naturally aligned to `size`. Size is in bytes.
-    pub fn allocate(&mut self, size: usize, alignment: u8) -> Result<usize, ()> {
+    pub fn allocate(&mut self, size: usize, alignment: u8) -> Result<usize, CapaError> {
         assert!(alignment < 64, "alignment is too large");
 
         if self.is_split {
-            return Err(());
+            return Err(CapaError::UntypedAlreadySplit);
         }
 
         let align = 1usize << alignment;
@@ -76,25 +101,25 @@ impl UntypedCapa {
         let end = 1usize << self.size;
 
         if aligned + size > end {
-            return Err(());
+            return Err(CapaError::UntypedOutOfSpace);
         }
 
         self.watermark = aligned + size;
         Ok(self.address + aligned)
     }
 
-    pub fn split(&mut self) -> Result<(UntypedCapa, UntypedCapa), ()> {
+    pub fn split(&mut self) -> Result<(UntypedCapa, UntypedCapa), CapaError> {
         // We can not split a capability twice.
         if self.is_split {
-            Err(())
+            Err(CapaError::UntypedAlreadySplit)
         }
         // We can not split a capability with already allocated objects.
         else if self.watermark != 0 {
-            Err(())
+            Err(CapaError::UntypedAlreadyInUse)
         }
         // We can not split the capability any further.
         else if self.size <= FRAME_SIZE_EXPONENT {
-            Err(())
+            Err(CapaError::UntypedCantSplitFurther)
         }
         // All good, we can split.
         else {
