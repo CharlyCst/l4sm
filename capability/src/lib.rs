@@ -110,6 +110,10 @@ impl UntypedCapa {
         Ok(alloc_start)
     }
 
+    /// Split an untyped memory capability in two new capabilities that can be used independently.
+    ///
+    /// An untyped memory capability can be split only once, and can not be split once objects have
+    /// been allocated.
     pub fn split(&mut self) -> Result<(UntypedCapa, UntypedCapa), CapaError> {
         // We can not split a capability twice.
         if self.is_split {
