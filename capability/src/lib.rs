@@ -88,24 +88,26 @@ impl UntypedCapa {
     ///
     /// Size is in bytes, alignment a power of two.
     ///
-    /// The returned address is naturally aligned to `size`. Size is in bytes.
+    /// The returned start address is naturally aligned to 2 ^ alignment. Size is in bytes.
     pub fn allocate(&mut self, size: usize, alignment: u8) -> Result<usize, CapaError> {
         assert!(alignment < 64, "alignment is too large");
 
+        // We can not allocate if the capability has been split.
         if self.is_split {
             return Err(CapaError::UntypedAlreadySplit);
         }
 
-        let align = 1usize << alignment;
-        let aligned = (self.watermark + align - 1) & !(align - 1);
-        let end = 1usize << self.size;
+        // Align the start of the allocation to satisfy the constaint.
+        let alignment = 1usize << alignment;
+        let alloc_start = (self.address + self.watermark + alignment - 1) & !(alignment - 1);
 
-        if aligned + size > end {
+        // Check that we don't run out of space.
+        if alloc_start + size > self.end() {
             return Err(CapaError::UntypedOutOfSpace);
         }
 
-        self.watermark = aligned + size;
-        Ok(self.address + aligned)
+        self.watermark = (alloc_start + size) - self.address;
+        Ok(alloc_start)
     }
 
     pub fn split(&mut self) -> Result<(UntypedCapa, UntypedCapa), CapaError> {
@@ -130,6 +132,11 @@ impl UntypedCapa {
             let right = Self::new(address + (1 << size), size);
             Ok((left, right))
         }
+    }
+
+    /// Returns the end of the memory range (exclusive).
+    fn end(&self) -> usize {
+        self.address + (1usize << self.size)
     }
 }
 
