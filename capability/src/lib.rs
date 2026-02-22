@@ -18,6 +18,8 @@ pub enum CapaError {
     // CSpace
     #[error("invalid cnode index")]
     CNodeInvalidIndex,
+    #[error("guard bits do not match during CSpace resolution")]
+    CNodeGuardMismatch,
     #[error("cspace is full")]
     CspaceOutOfSpace,
 
@@ -39,12 +41,24 @@ pub enum CapaError {
 pub struct CapaIdx(usize);
 
 /// Capability Derivation Tree Node
+#[derive(Debug)]
 pub struct CdtNode {
-    prev: *mut Capa,
-    next: *mut Capa,
+    pub(crate) prev: *mut Capa,
+    pub(crate) next: *mut Capa,
+}
+
+impl CdtNode {
+    /// Creates a new CDT node with null pointers, not yet linked into the tree.
+    pub(crate) fn unlinked() -> Self {
+        Self {
+            prev: core::ptr::null_mut(),
+            next: core::ptr::null_mut(),
+        }
+    }
 }
 
 /// A capability, as stored in a CNode.
+#[derive(Debug)]
 pub enum Capa {
     Null,
     CNode(CNodeCapa, CdtNode),
