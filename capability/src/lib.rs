@@ -10,18 +10,10 @@ mod untyped;
 use cnode::CNodeCapa;
 use untyped::UntypedCapa;
 
-// ——————————————————————————————— Constants ———————————————————————————————— //
-
-/// Size of a frame as a power of two.
-///
-/// Note: on Arm the frame size is configurable. 4kiB is the minimal size, but we might want to
-/// make this configurable in the future.
-const FRAME_SIZE_EXPONENT: u8 = 12;
-
 // ————————————————————————————————— Errors ————————————————————————————————— //
 
 /// Capability operation error.
-#[derive(Error, Debug)]
+#[derive(Error, Debug, PartialEq, Eq)]
 pub enum CapaError {
     // CSpace
     #[error("invalid cnode index")]
@@ -30,14 +22,14 @@ pub enum CapaError {
     CspaceOutOfSpace,
 
     // Untyped Memory
-    #[error("untyped memory capabilities is already split")]
-    UntypedAlreadySplit,
-    #[error("untyped memory has already allocated objects")]
-    UntypedAlreadyInUse,
-    #[error("untyped memory can't be split further thant its current size")]
-    UntypedCantSplitFurther,
-    #[error("untyped memory doest have enough free space")]
+    #[error("untyped memory does not have enough free space")]
     UntypedOutOfSpace,
+    #[error("proposed range is not within the parent's range")]
+    UntypedOutOfBounds,
+    #[error("proposed range overlaps a conflicting sibling")]
+    UntypedOverlap,
+    #[error("operation rejected due to implicit mode (watermark > 0)")]
+    UntypedWrongMode,
 }
 
 // —————————————————————————————— Capabilities —————————————————————————————— //
