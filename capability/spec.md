@@ -255,3 +255,35 @@ r[cspace.error.guard]
 
 r[cspace.error.index]
 `CNodeInvalidIndex` is returned when a slot index is out of bounds, or when the walk reaches a non-CNode slot with remaining bits still non-zero.
+
+## Operations
+
+This section documents the public L4sm API for capability derivation. These operations accept a raw pointer to CSpace memory and `CapaIdx` values, as L4sm does not own the capability memory.
+
+### Shared preconditions
+
+r[op.root]
+`root: *mut Capa` must point to a valid `Capa::CNode`. It is the root of the CSpace used to resolve all `CapaIdx` arguments.
+
+r[op.src]
+`src: CapaIdx` must resolve (via `r[cspace.resolve]`) to a `Capa::Untyped`. Returns `InvalidCapaType` if the resolved slot has a different type.
+
+r[op.dst]
+`dst: CapaIdx` must resolve to a `Capa::Null` slot. Returns `SlotOccupied` if the slot is already occupied. This check is performed before the derivation operation so that no capability is created if the destination is unavailable. The new capability is written directly to that slot on success.
+
+
+### carve
+
+r[op.carve]
+`carve(root, src, dst, start, end)` derives a new `Carved` untyped capability covering `[start, end)` from the untyped at `src` and writes it to the `Null` slot at `dst`.
+
+r[op.carve.delegate]
+The range and overlap checks are delegated to `UntypedCapa::carve` (see `r[untyped.carve]`, `r[untyped.carve.bounds]`, `r[untyped.carve.no-overlap]`, `r[untyped.carve.mode]`).
+
+### alias
+
+r[op.alias]
+`alias(root, src, dst, start, end)` derives a new `Aliased` untyped capability covering `[start, end)` from the untyped at `src` and writes it to the `Null` slot at `dst`.
+
+r[op.alias.delegate]
+The range and overlap checks are delegated to `UntypedCapa::alias` (see `r[untyped.alias]`, `r[untyped.alias.bounds]`, `r[untyped.alias.no-overlap-carved]`, `r[untyped.alias.mode]`).

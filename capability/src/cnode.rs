@@ -88,7 +88,7 @@ impl CNodeCapa {
                 return Ok(i);
             }
         }
-        Err(CapaError::CspaceOutOfSpace)
+        Err(CapaError::CNodeOutOfSpace)
     }
 
     /// Resolves a `CapaIdx` to a shared reference to a capability slot.
@@ -228,7 +228,7 @@ mod tests {
         let child = make_cnode(1);
         assert_eq!(
             cnode.insert(Capa::CNode(child, CdtNode::unlinked())).unwrap_err(),
-            CapaError::CspaceOutOfSpace
+            CapaError::CNodeOutOfSpace
         );
     }
 
