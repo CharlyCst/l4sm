@@ -11,6 +11,10 @@ build:
     RUSTFLAGS="-C link-arg=-Tlinker-script.x" cargo +nightly build --target aarch64-unknown-none-softfloat -Zbuild-std=core -Zbuild-std-features=compiler-builtins-mem
     rust-objcopy -O binary ./target/aarch64-unknown-none-softfloat/debug/l4sm artifacts/bl31.bin
 
+# Run the test suite
+test:
+    cargo test -p capability
+
 # Run the monitor on QEMU
 run:
     @just build
