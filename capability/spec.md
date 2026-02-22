@@ -163,3 +163,95 @@ r[untyped.allocate]
 
 r[untyped.allocate.mode]
 `allocate` must be rejected if the capability has any CDT children.
+
+### CNode
+
+A CNode (Capability Node) is a kernel object that stores an array of capability slots. CNodes are the building blocks of a CSpace: the hierarchical namespace used to name and look up capabilities.
+
+#### Structure
+
+r[cnode.structure]
+```rust
+pub struct CNodeCapa {
+    slots:      u8,            // radix: the CNode holds 2^slots capability slots
+    guard:      usize,         // guard value matched when entering this CNode
+    guard_size: u8,            // number of bits in the guard
+    address:    NonNull<Capa>, // backing array of 2^slots Capa values; uniquely owned
+}
+```
+
+#### Invariants
+
+r[cnode.invariant.guard-nonzero]
+The guard must be non-zero and `guard_size` must be at least 1. This is a functional requirement: a zero guard would make slot 0 of this CNode unreachable (see `r[cspace.resolve.stop]`).
+
+r[cnode.invariant.guard-fits]
+The guard value must fit within `guard_size` bits: `guard < 2^guard_size`.
+
+r[cnode.invariant.unique-owner]
+A `CNodeCapa` uniquely owns its backing array. CNode capabilities cannot be copied or aliased; the backing array is freed when the capability is revoked.
+
+#### Slot Access
+
+r[cnode.get]
+`get(&self, index: usize) -> Result<&Capa, CapaError>` returns a shared reference to the capability at `index`. The reference lifetime is tied to the shared borrow of `CNodeCapa`, preventing concurrent mutation.
+
+r[cnode.get_mut]
+`get_mut(&mut self, index: usize) -> Result<&mut Capa, CapaError>` returns an exclusive mutable reference to the capability at `index`. The reference lifetime is tied to the exclusive borrow of `CNodeCapa`.
+
+r[cnode.bounds]
+Both `get` and `get_mut` return `CNodeInvalidIndex` if `index >= 2^slots`.
+
+#### Insert
+
+r[cnode.insert]
+`insert(&mut self, capa: Capa) -> Result<usize, CapaError>` performs a linear scan for the first slot containing `Capa::Null`, writes `capa` into it, and returns the slot index. Returns `CspaceOutOfSpace` if no free slot exists.
+
+### CSpace
+
+The CSpace is the capability address space of a task. It is a tree of CNodes rooted at a designated root CNode. Individual capabilities are named by a `CapaIdx`.
+
+#### CapaIdx
+
+r[cspace.capaidx]
+```rust
+pub struct CapaIdx(usize);
+```
+
+A `CapaIdx` is a `usize` encoding a path through the CNode tree. Bits are consumed from the most significant end. Each valid `CapaIdx` uniquely identifies one slot in the tree (see `r[cspace.resolve.uniqueness]`).
+
+#### Resolution
+
+r[cspace.resolve]
+`resolve(root: &CNodeCapa, idx: CapaIdx) -> Result<&Capa, CapaError>` resolves a `CapaIdx` to a capability slot by walking the CNode tree starting from `root`. The walk is defined recursively: to resolve `idx` against a CNode `N`:
+
+r[cspace.resolve.guard]
+1. Check that the most significant `N.guard_size` bits of the remaining `idx` equal `N.guard`. If not, return `CNodeGuardMismatch`. Consume those bits.
+
+r[cspace.resolve.index]
+2. Use the next `N.slots` bits as the slot index `i`. Consume those bits.
+
+r[cspace.resolve.stop]
+3. If the remaining bits are all zero, return slot `i` of `N` as the resolved capability.
+
+r[cspace.resolve.descend]
+4. If the remaining bits are non-zero and slot `i` is `Capa::CNode(child, _)`, recurse with `child` as the new `N`.
+
+r[cspace.resolve.error]
+5. If the remaining bits are non-zero and slot `i` is not `Capa::CNode`, return `CNodeInvalidIndex`.
+
+#### Uniqueness
+
+r[cspace.resolve.uniqueness]
+Every slot in the CNode tree has a unique `CapaIdx`. Any two distinct paths through the tree produce distinct bit patterns because:
+
+- Each level consumes `guard_size + slots` bits.
+- The guard bits consumed on descent are non-zero (`r[cnode.invariant.guard-nonzero]`), so the bit pattern for "descend into child, reach slot X" is always distinct from "stop at this CNode slot" (which leaves remaining bits as zero).
+
+#### Errors
+
+r[cspace.error.guard]
+`CNodeGuardMismatch` is returned when the guard bits in the `CapaIdx` do not match the CNode's guard during resolution.
+
+r[cspace.error.index]
+`CNodeInvalidIndex` is returned when a slot index is out of bounds, or when the walk reaches a non-CNode slot with remaining bits still non-zero.
