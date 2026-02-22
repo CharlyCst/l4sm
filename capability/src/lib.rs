@@ -22,10 +22,8 @@ pub enum CapaError {
     CNodeGuardMismatch,
     #[error("cnode is full")]
     CNodeOutOfSpace,
-    #[error("capability has the wrong type for this operation")]
-    InvalidCapaType,
     #[error("destination slot is already occupied")]
-    SlotOccupied,
+    CNodeSlotOccupied,
 
     // Untyped Memory
     #[error("untyped memory does not have enough free space")]
@@ -36,6 +34,10 @@ pub enum CapaError {
     UntypedOverlap,
     #[error("operation rejected due to implicit mode (watermark > 0)")]
     UntypedWrongMode,
+
+    // Misc
+    #[error("capability has the wrong type for this operation")]
+    InvalidCapaType,
 }
 
 // —————————————————————————————— Capabilities —————————————————————————————— //
@@ -115,7 +117,7 @@ pub unsafe fn carve(
 
     // r[op.dst]: dst must be a Null slot; check before deriving to avoid discarding the child.
     if unsafe { !matches!(*dst_ptr, Capa::Null) } {
-        return Err(CapaError::SlotOccupied);
+        return Err(CapaError::CNodeSlotOccupied);
     }
 
     let untyped = unsafe { as_untyped(src_ptr) }?;
@@ -146,7 +148,7 @@ pub unsafe fn alias(
 
     // r[op.dst]: dst must be a Null slot; check before deriving to avoid discarding the child.
     if unsafe { !matches!(*dst_ptr, Capa::Null) } {
-        return Err(CapaError::SlotOccupied);
+        return Err(CapaError::CNodeSlotOccupied);
     }
 
     let untyped = unsafe { as_untyped(src_ptr) }?;
