@@ -4,10 +4,10 @@
 
 use thiserror::Error;
 
-mod cspace;
+mod cnode;
 mod untyped;
 
-use cspace::CSpaceCapa;
+use cnode::CNodeCapa;
 use untyped::UntypedCapa;
 
 // ——————————————————————————————— Constants ———————————————————————————————— //
@@ -24,8 +24,8 @@ const FRAME_SIZE_EXPONENT: u8 = 12;
 #[derive(Error, Debug)]
 pub enum CapaError {
     // CSpace
-    #[error("invalid cspace index")]
-    CSpaceInvalidIndex,
+    #[error("invalid cnode index")]
+    CNodeInvalidIndex,
     #[error("cspace is full")]
     CspaceOutOfSpace,
 
@@ -46,9 +46,15 @@ pub enum CapaError {
 #[repr(transparent)]
 pub struct CapaIdx(usize);
 
-/// A capability, as stored in a CSpace.
+/// Capability Derivation Tree Node
+pub struct CdtNode {
+    prev: *mut Capa,
+    next: *mut Capa,
+}
+
+/// A capability, as stored in a CNode.
 pub enum Capa {
     Null,
-    CSpace(CSpaceCapa),
-    Untyped(UntypedCapa),
+    CNode(CNodeCapa, CdtNode),
+    Untyped(UntypedCapa, CdtNode),
 }
