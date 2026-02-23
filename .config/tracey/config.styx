@@ -1,0 +1,16 @@
+specs (
+    {
+        name capability
+        include (capability/spec.md)
+        impls (
+            {
+                name rust
+                include (
+                    capability/src/**/*.rs
+                    src/**/*.rs
+                )
+                exclude (target/**)
+            }
+        )
+    }
+)
