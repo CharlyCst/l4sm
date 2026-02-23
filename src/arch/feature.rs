@@ -51,22 +51,28 @@ pub fn log_features() {
 
     // GIC
     let gic = field(pfr0, 24);
-    log::info!("  GIC: {}", match gic {
-        0b0000 => "none",
-        0b0001 => "v3.0/v4.0",
-        0b0011 => "v4.1",
-        _ => "unknown",
-    });
+    log::info!(
+        "  GIC: {}",
+        match gic {
+            0b0000 => "none",
+            0b0001 => "v3.0/v4.0",
+            0b0011 => "v4.1",
+            _ => "unknown",
+        }
+    );
 
     // RAS
     let ras = field(pfr0, 28);
-    log::info!("  RAS: {}", match ras {
-        0b0000 => "none",
-        0b0001 => "v1",
-        0b0010 => "v1.1",
-        0b0011 => "v2",
-        _ => "unknown",
-    });
+    log::info!(
+        "  RAS: {}",
+        match ras {
+            0b0000 => "none",
+            0b0001 => "v1",
+            0b0010 => "v1.1",
+            0b0011 => "v2",
+            _ => "unknown",
+        }
+    );
 
     // SVE
     let sve = field(pfr0, 32);
@@ -82,12 +88,15 @@ pub fn log_features() {
 
     // AMU
     let amu = field(pfr0, 44);
-    log::info!("  AMU: {}", match amu {
-        0b0000 => "none",
-        0b0001 => "v1",
-        0b0010 => "v1.1",
-        _ => "unknown",
-    });
+    log::info!(
+        "  AMU: {}",
+        match amu {
+            0b0000 => "none",
+            0b0001 => "v1",
+            0b0010 => "v1.1",
+            _ => "unknown",
+        }
+    );
 
     // DIT
     let dit = field(pfr0, 48);
@@ -95,23 +104,29 @@ pub fn log_features() {
 
     // RME
     let rme = field(pfr0, 52);
-    log::info!("  RME: {}", match rme {
-        0b0000 => "none",
-        0b0001 => "v1",
-        0b0010 => "v1 + GPC2",
-        0b0011 => "v1 + GPC2 + GPC3",
-        _ => "unknown",
-    });
+    log::info!(
+        "  RME: {}",
+        match rme {
+            0b0000 => "none",
+            0b0001 => "v1",
+            0b0010 => "v1 + GPC2",
+            0b0011 => "v1 + GPC2 + GPC3",
+            _ => "unknown",
+        }
+    );
 
     // CSV2
     let csv2 = field(pfr0, 56);
-    log::info!("  CSV2: {}", match csv2 {
-        0b0000 => "none",
-        0b0001 => "v1",
-        0b0010 => "v2",
-        0b0011 => "v3",
-        _ => "unknown",
-    });
+    log::info!(
+        "  CSV2: {}",
+        match csv2 {
+            0b0000 => "none",
+            0b0001 => "v1",
+            0b0010 => "v2",
+            0b0011 => "v3",
+            _ => "unknown",
+        }
+    );
 
     // CSV3
     let csv3 = field(pfr0, 60);

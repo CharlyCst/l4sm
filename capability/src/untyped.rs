@@ -91,7 +91,9 @@ impl UntypedCapa {
         }
         // r[untyped.alias.no-overlap-carved]
         for child in children {
-            if child.kind == UntypedKind::Carved && Self::overlaps(start, end, child.start, child.end) {
+            if child.kind == UntypedKind::Carved
+                && Self::overlaps(start, end, child.start, child.end)
+            {
                 return Err(CapaError::UntypedOverlap);
             }
         }
@@ -201,17 +203,23 @@ mod tests {
         let mut parent = UntypedCapa::new(0x1000, 0x5000, UntypedKind::Carved);
         // start before parent
         assert_eq!(
-            parent.alias(0x0000, 0x2000, std::iter::empty()).unwrap_err(),
+            parent
+                .alias(0x0000, 0x2000, std::iter::empty())
+                .unwrap_err(),
             CapaError::UntypedOutOfBounds
         );
         // end after parent
         assert_eq!(
-            parent.alias(0x1000, 0x6000, std::iter::empty()).unwrap_err(),
+            parent
+                .alias(0x1000, 0x6000, std::iter::empty())
+                .unwrap_err(),
             CapaError::UntypedOutOfBounds
         );
         // start >= end
         assert_eq!(
-            parent.alias(0x3000, 0x2000, std::iter::empty()).unwrap_err(),
+            parent
+                .alias(0x3000, 0x2000, std::iter::empty())
+                .unwrap_err(),
             CapaError::UntypedOutOfBounds
         );
     }
@@ -242,7 +250,9 @@ mod tests {
         let mut parent = UntypedCapa::new(0x1000, 0x5000, UntypedKind::Carved);
         parent.allocate(64, 0).unwrap();
         assert_eq!(
-            parent.alias(0x1000, 0x3000, std::iter::empty()).unwrap_err(),
+            parent
+                .alias(0x1000, 0x3000, std::iter::empty())
+                .unwrap_err(),
             CapaError::UntypedWrongMode
         );
     }
@@ -260,11 +270,15 @@ mod tests {
     fn carve_out_of_bounds() {
         let mut parent = UntypedCapa::new(0x1000, 0x5000, UntypedKind::Carved);
         assert_eq!(
-            parent.carve(0x0000, 0x2000, std::iter::empty()).unwrap_err(),
+            parent
+                .carve(0x0000, 0x2000, std::iter::empty())
+                .unwrap_err(),
             CapaError::UntypedOutOfBounds
         );
         assert_eq!(
-            parent.carve(0x1000, 0x6000, std::iter::empty()).unwrap_err(),
+            parent
+                .carve(0x1000, 0x6000, std::iter::empty())
+                .unwrap_err(),
             CapaError::UntypedOutOfBounds
         );
     }
@@ -306,7 +320,9 @@ mod tests {
         let mut parent = UntypedCapa::new(0x1000, 0x5000, UntypedKind::Carved);
         parent.allocate(64, 0).unwrap();
         assert_eq!(
-            parent.carve(0x1000, 0x3000, std::iter::empty()).unwrap_err(),
+            parent
+                .carve(0x1000, 0x3000, std::iter::empty())
+                .unwrap_err(),
             CapaError::UntypedWrongMode
         );
     }

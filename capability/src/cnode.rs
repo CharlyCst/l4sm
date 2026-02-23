@@ -40,9 +40,15 @@ impl CNodeCapa {
     ) -> Self {
         assert!(address.is_aligned());
         assert!(slots >= 1, "slots must be at least 1");
-        assert!((slots as u32) < usize::BITS, "slots must be less than pointer width");
+        assert!(
+            (slots as u32) < usize::BITS,
+            "slots must be less than pointer width"
+        );
         // r[cnode.invariant.guard-nonzero]
-        assert!(guard_size >= 1, "guard_size must be at least 1 (r[cnode.invariant.guard-nonzero])");
+        assert!(
+            guard_size >= 1,
+            "guard_size must be at least 1 (r[cnode.invariant.guard-nonzero])"
+        );
         assert!(
             (guard_size as u32) < usize::BITS,
             "guard_size must be less than pointer width"
@@ -51,14 +57,22 @@ impl CNodeCapa {
             (guard_size as u32) + (slots as u32) <= usize::BITS,
             "guard_size + slots must not exceed pointer width"
         );
-        assert!(guard != 0, "guard must be non-zero (r[cnode.invariant.guard-nonzero])");
+        assert!(
+            guard != 0,
+            "guard must be non-zero (r[cnode.invariant.guard-nonzero])"
+        );
         // r[cnode.invariant.guard-fits]
         assert!(
             guard < (1usize << guard_size),
             "guard must fit within guard_size bits (r[cnode.invariant.guard-fits])"
         );
 
-        Self { slots, guard, guard_size, address }
+        Self {
+            slots,
+            guard,
+            guard_size,
+            address,
+        }
     }
 
     // r[cnode.get]
@@ -213,7 +227,10 @@ mod tests {
     fn get_out_of_bounds() {
         let cnode = make_cnode(3); // 8 slots
         assert_eq!(cnode.get(8).unwrap_err(), CapaError::CNodeInvalidIndex);
-        assert_eq!(cnode.get(usize::MAX).unwrap_err(), CapaError::CNodeInvalidIndex);
+        assert_eq!(
+            cnode.get(usize::MAX).unwrap_err(),
+            CapaError::CNodeInvalidIndex
+        );
     }
 
     // ———————————————————————————————— insert —————————————————————————————— //
@@ -222,7 +239,9 @@ mod tests {
     fn insert_basic() {
         let mut cnode = make_cnode(3);
         let child = make_cnode(1);
-        let idx = cnode.insert(Capa::CNode(child, CdtNode::unlinked())).unwrap();
+        let idx = cnode
+            .insert(Capa::CNode(child, CdtNode::unlinked()))
+            .unwrap();
         assert_eq!(idx, 0);
     }
 
@@ -231,12 +250,16 @@ mod tests {
         let mut cnode = make_cnode(2); // 4 slots
         for expected in 0..4usize {
             let child = make_cnode(1);
-            let idx = cnode.insert(Capa::CNode(child, CdtNode::unlinked())).unwrap();
+            let idx = cnode
+                .insert(Capa::CNode(child, CdtNode::unlinked()))
+                .unwrap();
             assert_eq!(idx, expected);
         }
         let child = make_cnode(1);
         assert_eq!(
-            cnode.insert(Capa::CNode(child, CdtNode::unlinked())).unwrap_err(),
+            cnode
+                .insert(Capa::CNode(child, CdtNode::unlinked()))
+                .unwrap_err(),
             CapaError::CNodeOutOfSpace
         );
     }
@@ -263,7 +286,10 @@ mod tests {
         let cnode = make_cnode(3); // guard=1
         // Flip the guard bit: use 0 instead of 1 in the top bit.
         let bad_idx = CapaIdx(0 << 63); // guard bit = 0, mismatch
-        assert_eq!(cnode.resolve(bad_idx).unwrap_err(), CapaError::CNodeGuardMismatch);
+        assert_eq!(
+            cnode.resolve(bad_idx).unwrap_err(),
+            CapaError::CNodeGuardMismatch
+        );
     }
 
     #[test]
@@ -279,7 +305,7 @@ mod tests {
     #[test]
     fn resolve_two_levels() {
         let mut parent = make_cnode(3); // guard=1 (1 bit), 8 slots
-        let child = make_cnode(3);     // guard=1 (1 bit), 8 slots
+        let child = make_cnode(3); // guard=1 (1 bit), 8 slots
 
         // Place child CNode at parent slot 0.
         *parent.get_mut(0).unwrap() = Capa::CNode(child, CdtNode::unlinked());

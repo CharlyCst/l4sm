@@ -4,9 +4,11 @@
 
 use thiserror::Error;
 
+mod cdt;
 mod cnode;
 mod untyped;
 
+pub(crate) use cdt::CdtNode;
 use cnode::CNodeCapa;
 use untyped::UntypedCapa;
 
@@ -44,32 +46,14 @@ pub enum CapaError {
 
 // —————————————————————————————— Capabilities —————————————————————————————— //
 
-// r[cspace.capaidx]
 /// A capability index, represents an address in capability space (CSpace).
+// r[cspace.capaidx]
 #[repr(transparent)]
 pub struct CapaIdx(usize);
 
-// r[cdt.structure.node]
-/// Capability Derivation Tree Node
-#[derive(Debug)]
-pub struct CdtNode {
-    pub(crate) prev: *mut Capa,
-    pub(crate) next: *mut Capa,
-}
-
-impl CdtNode {
-    /// Creates a new CDT node with null pointers, not yet linked into the tree.
-    pub(crate) fn unlinked() -> Self {
-        Self {
-            prev: core::ptr::null_mut(),
-            next: core::ptr::null_mut(),
-        }
-    }
-}
-
+/// A capability, as stored in a CNode.
 // r[cdt.structure.embedded]
 // r[cdt.structure.capa]
-/// A capability, as stored in a CNode.
 #[derive(Debug)]
 pub enum Capa {
     // r[cdt.null.no-cdt-node]
@@ -104,7 +88,6 @@ unsafe fn as_untyped<'a>(ptr: *mut Capa) -> Result<&'a mut UntypedCapa, CapaErro
     }
 }
 
-// r[op.carve]
 /// Derives an exclusive `Carved` child untyped capability covering `[start, end)` from the
 /// untyped capability at `src`, and writes it to the `Null` slot at `dst`.
 ///
@@ -112,6 +95,7 @@ unsafe fn as_untyped<'a>(ptr: *mut Capa) -> Result<&'a mut UntypedCapa, CapaErro
 ///
 /// `root` must be a valid pointer to a `Capa::CNode`. The caller is responsible for providing
 /// CDT children once CDT wiring is implemented.
+// r[op.carve]
 pub unsafe fn carve(
     root: *mut Capa,
     src: CapaIdx,
@@ -139,7 +123,6 @@ pub unsafe fn carve(
     Ok(())
 }
 
-// r[op.alias]
 /// Derives a shared `Aliased` child untyped capability covering `[start, end)` from the
 /// untyped capability at `src`, and inserts it into the `Null` slot at `dst`.
 ///
@@ -147,6 +130,7 @@ pub unsafe fn carve(
 ///
 /// `root` must be a valid pointer to a `Capa::CNode`. The caller is responsible for providing
 /// CDT children once CDT wiring is implemented.
+// r[op.alias]
 pub unsafe fn alias(
     root: *mut Capa,
     src: CapaIdx,
