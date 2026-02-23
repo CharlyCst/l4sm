@@ -4,6 +4,8 @@ use core::ptr;
 
 use crate::{Capa, CapaError, CapaIdx};
 
+// r[cnode.structure]
+// r[cnode.invariant.unique-owner]
 /// Capability Node Capability.
 #[derive(Debug)]
 pub struct CNodeCapa {
@@ -39,6 +41,7 @@ impl CNodeCapa {
         assert!(address.is_aligned());
         assert!(slots >= 1, "slots must be at least 1");
         assert!((slots as u32) < usize::BITS, "slots must be less than pointer width");
+        // r[cnode.invariant.guard-nonzero]
         assert!(guard_size >= 1, "guard_size must be at least 1 (r[cnode.invariant.guard-nonzero])");
         assert!(
             (guard_size as u32) < usize::BITS,
@@ -49,6 +52,7 @@ impl CNodeCapa {
             "guard_size + slots must not exceed pointer width"
         );
         assert!(guard != 0, "guard must be non-zero (r[cnode.invariant.guard-nonzero])");
+        // r[cnode.invariant.guard-fits]
         assert!(
             guard < (1usize << guard_size),
             "guard must fit within guard_size bits (r[cnode.invariant.guard-fits])"
@@ -57,6 +61,8 @@ impl CNodeCapa {
         Self { slots, guard, guard_size, address }
     }
 
+    // r[cnode.get]
+    // r[cnode.bounds]
     /// Returns a shared reference to the capability at `index`.
     ///
     /// The reference lifetime is tied to the shared borrow of this `CNodeCapa`.
@@ -67,6 +73,7 @@ impl CNodeCapa {
         unsafe { Ok(self.address.add(index).as_ref()) }
     }
 
+    // r[cnode.get_mut]
     /// Returns an exclusive mutable reference to the capability at `index`.
     ///
     /// The reference lifetime is tied to the exclusive borrow of this `CNodeCapa`.
@@ -77,6 +84,7 @@ impl CNodeCapa {
         unsafe { Ok(self.address.add(index).as_mut()) }
     }
 
+    // r[cnode.insert]
     /// Inserts a capability into the first free (`Null`) slot, returning the slot index.
     ///
     /// Returns `CspaceOutOfSpace` if no free slot exists.
@@ -91,9 +99,9 @@ impl CNodeCapa {
         Err(CapaError::CNodeOutOfSpace)
     }
 
+    // r[cspace.resolve]
+    // r[cspace.resolve.uniqueness]
     /// Resolves a `CapaIdx` to a shared reference to a capability slot.
-    ///
-    /// See `r[cspace.resolve]`.
     pub fn resolve(&self, idx: CapaIdx) -> Result<&Capa, CapaError> {
         self.resolve_inner(idx.0)
     }
@@ -106,13 +114,14 @@ impl CNodeCapa {
     /// Decodes one level of a `CapaIdx` against this CNode.
     ///
     /// Checks the guard, extracts the slot index, and returns `(slot_idx, remaining)`.
-    /// See `r[cspace.resolve.guard]` and `r[cspace.resolve.index]`.
     fn decode(&self, mut idx: usize) -> Result<(usize, usize), CapaError> {
         let guard_shift = usize::BITS as u8 - self.guard_size;
+        // r[cspace.resolve.guard]
         if (idx >> guard_shift) != self.guard {
             return Err(CapaError::CNodeGuardMismatch);
         }
         idx <<= self.guard_size;
+        // r[cspace.resolve.index]
         let slot_idx = idx >> (usize::BITS as u8 - self.slots);
         idx <<= self.slots;
         Ok((slot_idx, idx))

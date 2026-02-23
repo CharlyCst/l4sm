@@ -2,6 +2,7 @@
 
 use crate::CapaError;
 
+// r[untyped.kind.derived]
 /// The derivation kind of an untyped capability.
 #[derive(Debug, PartialEq, Eq)]
 pub enum UntypedKind {
@@ -9,6 +10,7 @@ pub enum UntypedKind {
     Carved,
 }
 
+// r[untyped.structure]
 /// Untyped Memory Capability.
 #[derive(Debug)]
 pub struct UntypedCapa {
@@ -29,6 +31,7 @@ impl UntypedCapa {
     /// Creates a new untyped memory capability covering `[start, end)`.
     pub fn new(start: usize, end: usize, kind: UntypedKind) -> Self {
         assert!(start < end, "start must be less than end");
+        // r[untyped.mode.fresh]
         Self {
             start,
             end,
@@ -37,6 +40,8 @@ impl UntypedCapa {
         }
     }
 
+    // r[untyped.allocate]
+    // r[untyped.mode.allocation]
     /// Allocates memory for use by L4sm objects.
     ///
     /// Size is in bytes, alignment is a power of two (as an exponent).
@@ -62,6 +67,7 @@ impl UntypedCapa {
         Ok(alloc_start)
     }
 
+    // r[untyped.alias]
     /// Derives a new aliased child capability covering `[start, end)`.
     ///
     /// Aliased children may overlap with other aliased children, but not with carved children.
@@ -97,6 +103,7 @@ impl UntypedCapa {
         })
     }
 
+    // r[untyped.carve]
     /// Derives a new carved (exclusive) child capability covering `[start, end)`.
     ///
     /// Carved children may not overlap with any other child, aliased or carved.

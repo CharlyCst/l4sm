@@ -16,8 +16,10 @@ use untyped::UntypedCapa;
 #[derive(Error, Debug, PartialEq, Eq)]
 pub enum CapaError {
     // CNode
+    // r[cspace.error.index]
     #[error("invalid cnode index")]
     CNodeInvalidIndex,
+    // r[cspace.error.guard]
     #[error("guard bits do not match during CSpace resolution")]
     CNodeGuardMismatch,
     #[error("cnode is full")]
@@ -42,10 +44,12 @@ pub enum CapaError {
 
 // —————————————————————————————— Capabilities —————————————————————————————— //
 
+// r[cspace.capaidx]
 /// A capability index, represents an address in capability space (CSpace).
 #[repr(transparent)]
 pub struct CapaIdx(usize);
 
+// r[cdt.structure.node]
 /// Capability Derivation Tree Node
 #[derive(Debug)]
 pub struct CdtNode {
@@ -63,9 +67,12 @@ impl CdtNode {
     }
 }
 
+// r[cdt.structure.embedded]
+// r[cdt.structure.capa]
 /// A capability, as stored in a CNode.
 #[derive(Debug)]
 pub enum Capa {
+    // r[cdt.null.no-cdt-node]
     Null,
     CNode(CNodeCapa, CdtNode),
     Untyped(UntypedCapa, CdtNode),
@@ -97,6 +104,7 @@ unsafe fn as_untyped<'a>(ptr: *mut Capa) -> Result<&'a mut UntypedCapa, CapaErro
     }
 }
 
+// r[op.carve]
 /// Derives an exclusive `Carved` child untyped capability covering `[start, end)` from the
 /// untyped capability at `src`, and writes it to the `Null` slot at `dst`.
 ///
@@ -111,6 +119,7 @@ pub unsafe fn carve(
     start: usize,
     end: usize,
 ) -> Result<(), CapaError> {
+    // r[op.root]
     let root_cnode = unsafe { as_cnode(root) }?;
     let src_ptr: *mut Capa = root_cnode.resolve_mut(src)?;
     let dst_ptr: *mut Capa = root_cnode.resolve_mut(dst)?;
@@ -120,7 +129,9 @@ pub unsafe fn carve(
         return Err(CapaError::CNodeSlotOccupied);
     }
 
+    // r[op.src]
     let untyped = unsafe { as_untyped(src_ptr) }?;
+    // r[op.carve.delegate]
     // TODO: pass CDT children once CDT wiring is implemented (r[untyped.carve.no-overlap])
     let child = untyped.carve(start, end, core::iter::empty())?;
 
@@ -128,6 +139,7 @@ pub unsafe fn carve(
     Ok(())
 }
 
+// r[op.alias]
 /// Derives a shared `Aliased` child untyped capability covering `[start, end)` from the
 /// untyped capability at `src`, and inserts it into the `Null` slot at `dst`.
 ///
@@ -142,6 +154,7 @@ pub unsafe fn alias(
     start: usize,
     end: usize,
 ) -> Result<(), CapaError> {
+    // r[op.root]
     let root_cnode = unsafe { as_cnode(root) }?;
     let src_ptr: *mut Capa = root_cnode.resolve_mut(src)?;
     let dst_ptr: *mut Capa = root_cnode.resolve_mut(dst)?;
@@ -151,7 +164,9 @@ pub unsafe fn alias(
         return Err(CapaError::CNodeSlotOccupied);
     }
 
+    // r[op.src]
     let untyped = unsafe { as_untyped(src_ptr) }?;
+    // r[op.alias.delegate]
     // TODO: pass CDT children once CDT wiring is implemented (r[untyped.alias.no-overlap-carved])
     let child = untyped.alias(start, end, core::iter::empty())?;
 
