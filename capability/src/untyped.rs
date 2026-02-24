@@ -141,6 +141,19 @@ impl UntypedCapa {
         })
     }
 
+    /// Returns the start address of the capability's memory range.
+    pub(crate) fn start(&self) -> usize {
+        self.start
+    }
+
+    // r[untyped.mode.switch]
+    /// Resets the watermark to 0, returning the capability to the fresh state.
+    ///
+    /// Called after all CDT children of this capability have been revoked.
+    pub(crate) fn reset_watermark(&mut self) {
+        self.watermark = 0;
+    }
+
     /// Returns true if the two ranges `[a_start, a_end)` and `[b_start, b_end)` overlap.
     fn overlaps(a_start: usize, a_end: usize, b_start: usize, b_end: usize) -> bool {
         a_start < b_end && b_start < a_end

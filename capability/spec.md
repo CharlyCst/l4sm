@@ -29,8 +29,9 @@ pub enum Capa {
 r[cdt.structure.node]
 ```rust
 pub struct CdtNode {
-    prev: *mut Capa,  // pointer to the previous entry in the list
-    next: *mut Capa,  // pointer to the next entry in the list
+    prev:  *mut Capa,  // pointer to the previous entry in the list
+    next:  *mut Capa,  // pointer to the next entry in the list
+    depth: usize,      // derivation depth; 0 for root capabilities
 }
 ```
 
@@ -58,10 +59,16 @@ r[cdt.invariant.order]
 r[cdt.invariant.list-consistent]
 3. The pointers form a consistent doubly-linked list: for any node `N`, `N.next.prev == N` and `N.prev.next == N`.
 
+r[cdt.invariant.depth]
+4. For any non-`Null` `Capa` N in the CDT, if P is N's parent in the derivation tree, then `N.depth == P.depth + 1`.
+
+r[cdt.root.depth]
+5. Root capabilities (inserted by the kernel at boot, not derived from any other capability) have `depth == 0`.
+
 #### Derivation
 
 r[cdt.derive.insert]
-When a new capability is derived from an existing one (e.g. via copy, mint, or retype), the new `Capa` is inserted immediately after the source node (or after the last existing descendant of the source).
+When a new capability is derived from an existing one (e.g. via copy, mint, or retype), the new `Capa` is inserted immediately after the source node (or after the last existing descendant of the source). The new node's `depth` is set to the source node's `depth + 1`.
 
 r[cdt.derive.rights]
 The new node inherits or reduces the rights of the source; it cannot exceed them.
@@ -72,7 +79,7 @@ r[cdt.revoke.subtree]
 Revoking the capability at node `N` invalidates `N`'s entire subtree.
 
 r[cdt.revoke.walk]
-The kernel walks forward from `N.next`, deleting each `Capa` until it reaches one that is not a descendant of `N`. A `Capa` `M` is a descendant of `N` if and only if `M` appeared after `N` at insertion time (i.e. the CDT invariant is maintained).
+The kernel walks forward from `N.next`, deleting each `Capa` while `M.depth > N.depth`, and stops at the first `M` where `M.depth <= N.depth`.
 
 r[cdt.revoke.memory]
 After revocation of an untyped capability, the corresponding range becomes available again in the parent: a new `alias` or `carve` covering that range may be issued.

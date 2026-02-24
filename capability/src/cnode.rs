@@ -240,7 +240,7 @@ mod tests {
         let mut cnode = make_cnode(3);
         let child = make_cnode(1);
         let idx = cnode
-            .insert(Capa::CNode(child, CdtNode::unlinked()))
+            .insert(Capa::CNode(child, CdtNode::unlinked(0)))
             .unwrap();
         assert_eq!(idx, 0);
     }
@@ -251,14 +251,14 @@ mod tests {
         for expected in 0..4usize {
             let child = make_cnode(1);
             let idx = cnode
-                .insert(Capa::CNode(child, CdtNode::unlinked()))
+                .insert(Capa::CNode(child, CdtNode::unlinked(0)))
                 .unwrap();
             assert_eq!(idx, expected);
         }
         let child = make_cnode(1);
         assert_eq!(
             cnode
-                .insert(Capa::CNode(child, CdtNode::unlinked()))
+                .insert(Capa::CNode(child, CdtNode::unlinked(0)))
                 .unwrap_err(),
             CapaError::CNodeOutOfSpace
         );
@@ -308,7 +308,7 @@ mod tests {
         let child = make_cnode(3); // guard=1 (1 bit), 8 slots
 
         // Place child CNode at parent slot 0.
-        *parent.get_mut(0).unwrap() = Capa::CNode(child, CdtNode::unlinked());
+        *parent.get_mut(0).unwrap() = Capa::CNode(child, CdtNode::unlinked(0));
 
         // idx2(0, 5): parent[0] → child[5], remaining=0 → stop at child[5] (Null).
         let capa = parent.resolve(idx2(0, 5)).unwrap();
@@ -323,7 +323,7 @@ mod tests {
     fn resolve_mut_two_levels() {
         let mut parent = make_cnode(3);
         let child = make_cnode(3);
-        *parent.get_mut(0).unwrap() = Capa::CNode(child, CdtNode::unlinked());
+        *parent.get_mut(0).unwrap() = Capa::CNode(child, CdtNode::unlinked(0));
 
         // Write through the mutable resolve to child[3].
         *parent.resolve_mut(idx2(0, 3)).unwrap() = Capa::Null;
