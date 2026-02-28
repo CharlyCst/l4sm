@@ -6,10 +6,12 @@ use core::ptr::NonNull;
 
 use thiserror::Error;
 
+pub mod info;
 mod cdt;
 mod cnode;
 mod untyped;
 
+pub use info::CapaInfo;
 pub(crate) use cdt::{direct_untyped_children, find_insert_after, CdtNode};
 use cnode::CNodeCapa;
 use untyped::{UntypedCapa, UntypedKind};
@@ -85,6 +87,29 @@ impl Capa {
     }
 }
 
+// ——————————————————————————— CapaInfo conversion —————————————————————————— //
+
+impl From<&Capa> for CapaInfo {
+    fn from(capa: &Capa) -> Self {
+        match capa {
+            Capa::Null => CapaInfo::Null,
+            Capa::CNode(cnode, _) => CapaInfo::CNode {
+                slots: cnode.slots(),
+                guard: cnode.guard(),
+                guard_size: cnode.guard_size(),
+            },
+            Capa::Untyped(ut, _) => CapaInfo::Untyped {
+                start: ut.start(),
+                end: ut.end(),
+                kind: match ut.kind() {
+                    untyped::UntypedKind::Aliased => info::UntypedKind::Aliased,
+                    untyped::UntypedKind::Carved => info::UntypedKind::Carved,
+                },
+            },
+        }
+    }
+}
+
 // ————————————————————————————— Bootstrap API —————————————————————————————— //
 
 /// Creates a root CNode capability (depth 0, not linked into any CDT).
@@ -129,14 +154,14 @@ pub unsafe fn new_root_untyped(
     Ok(root_cnode.capaidx_for(slot_idx))
 }
 
-/// Returns a shared reference to the capability at `idx` in the CSpace rooted at `root`.
+/// Returns a [`CapaInfo`] snapshot of the capability at `idx` in the CSpace rooted at `root`.
 ///
 /// # Safety
 ///
-/// `root` must be a valid pointer to a `Capa::CNode` that outlives the returned reference.
-pub unsafe fn lookup<'a>(root: NonNull<Capa>, idx: CapaIdx) -> Result<&'a Capa, CapaError> {
+/// `root` must be a valid pointer to a `Capa::CNode`.
+pub unsafe fn lookup(root: NonNull<Capa>, idx: CapaIdx) -> Result<CapaInfo, CapaError> {
     match unsafe { root.as_ref() } {
-        Capa::CNode(cnode, _) => cnode.resolve(idx),
+        Capa::CNode(cnode, _) => Ok(CapaInfo::from(cnode.resolve(idx)?)),
         _ => Err(CapaError::InvalidCapaType),
     }
 }

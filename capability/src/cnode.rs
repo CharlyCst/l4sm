@@ -165,6 +165,18 @@ impl CNodeCapa {
         }
     }
 
+    pub(crate) fn slots(&self) -> u8 {
+        self.slots
+    }
+
+    pub(crate) fn guard(&self) -> usize {
+        self.guard
+    }
+
+    pub(crate) fn guard_size(&self) -> u8 {
+        self.guard_size
+    }
+
     /// Returns the number of slots.
     const fn nb_slots(&self) -> usize {
         1usize << self.slots

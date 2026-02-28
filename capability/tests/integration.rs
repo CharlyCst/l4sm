@@ -5,6 +5,7 @@
 
 use capability::{
     alias, carve, lookup, new_root_cnode, new_root_untyped, revoke, Capa, CapaError, CapaIdx,
+    CapaInfo,
 };
 use core::ptr::NonNull;
 
@@ -49,7 +50,7 @@ fn carve_creates_untyped_child() {
     unsafe { carve(root, src, dst, 0x1000, 0x2000) }.unwrap();
 
     let child = unsafe { lookup(root, dst) }.unwrap();
-    assert!(matches!(child, Capa::Untyped(_, _)));
+    assert!(matches!(child, CapaInfo::Untyped { .. }));
 }
 
 #[test]
@@ -125,11 +126,11 @@ fn carve_non_overlapping_siblings() {
 
     assert!(matches!(
         unsafe { lookup(root, dst1) }.unwrap(),
-        Capa::Untyped(_, _)
+        CapaInfo::Untyped { .. }
     ));
     assert!(matches!(
         unsafe { lookup(root, dst2) }.unwrap(),
-        Capa::Untyped(_, _)
+        CapaInfo::Untyped { .. }
     ));
 }
 
@@ -146,7 +147,7 @@ fn alias_creates_untyped_child() {
     unsafe { alias(root, src, dst, 0x1000, 0x3000) }.unwrap();
 
     let child = unsafe { lookup(root, dst) }.unwrap();
-    assert!(matches!(child, Capa::Untyped(_, _)));
+    assert!(matches!(child, CapaInfo::Untyped { .. }));
 }
 
 #[test]
@@ -164,7 +165,7 @@ fn alias_allows_overlap_with_alias() {
 
     assert!(matches!(
         unsafe { lookup(root, dst2) }.unwrap(),
-        Capa::Untyped(_, _)
+        CapaInfo::Untyped { .. }
     ));
 }
 
@@ -202,16 +203,16 @@ fn revoke_deletes_direct_children() {
 
     assert!(matches!(
         unsafe { lookup(root, dst1) }.unwrap(),
-        Capa::Null
+        CapaInfo::Null
     ));
     assert!(matches!(
         unsafe { lookup(root, dst2) }.unwrap(),
-        Capa::Null
+        CapaInfo::Null
     ));
     // Parent itself is kept.
     assert!(matches!(
         unsafe { lookup(root, src) }.unwrap(),
-        Capa::Untyped(_, _)
+        CapaInfo::Untyped { .. }
     ));
 }
 
@@ -233,11 +234,11 @@ fn revoke_deletes_grandchildren() {
 
     assert!(matches!(
         unsafe { lookup(root, dst1) }.unwrap(),
-        Capa::Null
+        CapaInfo::Null
     ));
     assert!(matches!(
         unsafe { lookup(root, dst2) }.unwrap(),
-        Capa::Null
+        CapaInfo::Null
     ));
 }
 
@@ -255,14 +256,14 @@ fn revoke_resets_watermark_allows_recarve() {
     unsafe { revoke(root, src) }.unwrap();
     assert!(matches!(
         unsafe { lookup(root, dst) }.unwrap(),
-        Capa::Null
+        CapaInfo::Null
     ));
 
     // The same range can now be carved again.
     unsafe { carve(root, src, dst, 0x1000, 0x2000) }.unwrap();
     assert!(matches!(
         unsafe { lookup(root, dst) }.unwrap(),
-        Capa::Untyped(_, _)
+        CapaInfo::Untyped { .. }
     ));
 }
 
@@ -285,12 +286,12 @@ fn revoke_stops_at_sibling() {
     // dst1 is kept (revoke removes descendants, not the target itself).
     assert!(matches!(
         unsafe { lookup(root, dst1) }.unwrap(),
-        Capa::Untyped(_, _)
+        CapaInfo::Untyped { .. }
     ));
     // dst2 (sibling) is unaffected.
     assert!(matches!(
         unsafe { lookup(root, dst2) }.unwrap(),
-        Capa::Untyped(_, _)
+        CapaInfo::Untyped { .. }
     ));
 }
 
@@ -319,14 +320,14 @@ fn revoke_parent_after_revoking_middle_child() {
 
     assert!(matches!(
         unsafe { lookup(root, dst1) }.unwrap(),
-        Capa::Null
+        CapaInfo::Null
     ));
     assert!(matches!(
         unsafe { lookup(root, dst2) }.unwrap(),
-        Capa::Null
+        CapaInfo::Null
     ));
     assert!(matches!(
         unsafe { lookup(root, dst3) }.unwrap(),
-        Capa::Null
+        CapaInfo::Null
     ));
 }

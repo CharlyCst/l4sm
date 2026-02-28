@@ -146,6 +146,16 @@ impl UntypedCapa {
         self.start
     }
 
+    /// Returns the end address of the capability's memory range.
+    pub(crate) fn end(&self) -> usize {
+        self.end
+    }
+
+    /// Returns how this capability was derived.
+    pub(crate) fn kind(&self) -> &UntypedKind {
+        &self.kind
+    }
+
     // r[untyped.mode.switch]
     /// Resets the watermark to 0, returning the capability to the fresh state.
     ///
