@@ -106,21 +106,24 @@ pub unsafe fn new_root_cnode(
     )
 }
 
-/// Creates a root untyped memory capability covering `[start, end)` (depth 0, not linked into
-/// any CDT).
-pub fn new_root_untyped(start: usize, end: usize) -> Capa {
-    Capa::Untyped(
-        UntypedCapa::new(start, end, UntypedKind::Carved),
-        CdtNode::unlinked(0),
-    )
-}
-
-/// Inserts `capa` into the first free `Null` slot of the root CNode and returns its [`CapaIdx`].
+/// Creates a root untyped memory capability covering `[start, end)`, inserts it into the first
+/// free slot of the root CNode, and returns its [`CapaIdx`].
 ///
 /// # Safety
 ///
-/// `root` must be a valid, non-aliased pointer to a `Capa::CNode`.
-pub unsafe fn install(root: NonNull<Capa>, capa: Capa) -> Result<CapaIdx, CapaError> {
+/// - `root` must be a valid, non-aliased pointer to a `Capa::CNode`.
+/// - `[start, end)` must be a valid physical memory range exclusively owned by the caller.
+///   No other live capability may alias any part of this range. The range must remain valid
+///   until the capability is revoked.
+pub unsafe fn new_root_untyped(
+    root: NonNull<Capa>,
+    start: usize,
+    end: usize,
+) -> Result<CapaIdx, CapaError> {
+    let capa = Capa::Untyped(
+        UntypedCapa::new(start, end, UntypedKind::Carved),
+        CdtNode::unlinked(0),
+    );
     let root_cnode = unsafe { as_cnode(root) }?;
     let slot_idx = root_cnode.insert(capa)?;
     Ok(root_cnode.capaidx_for(slot_idx))

@@ -1,11 +1,10 @@
 //! Integration tests for the capability library.
 //!
-//! These tests exercise the public API (`carve`, `alias`, `revoke`, `install`, `lookup`, …)
-//! as a kernel consumer would, using only the types and functions exported from `lib.rs`.
+//! These tests exercise the public API (`carve`, `alias`, `revoke`, `lookup`, …) as a kernel
+//! consumer would, using only the types and functions exported from `lib.rs`.
 
 use capability::{
-    alias, carve, install, lookup, new_root_cnode, new_root_untyped, revoke, Capa, CapaError,
-    CapaIdx,
+    alias, carve, lookup, new_root_cnode, new_root_untyped, revoke, Capa, CapaError, CapaIdx,
 };
 use core::ptr::NonNull;
 
@@ -44,7 +43,7 @@ fn carve_creates_untyped_child() {
     let (mut root_box, _slots) = unsafe { make_cspace() };
     let root = root_nn(&mut root_box);
 
-    let src = unsafe { install(root, new_root_untyped(0x1000, 0x5000)) }.unwrap();
+    let src = unsafe { new_root_untyped(root, 0x1000, 0x5000) }.unwrap();
     let dst = idx(1);
 
     unsafe { carve(root, src, dst, 0x1000, 0x2000) }.unwrap();
@@ -58,9 +57,9 @@ fn carve_dst_must_be_null() {
     let (mut root_box, _slots) = unsafe { make_cspace() };
     let root = root_nn(&mut root_box);
 
-    let src = unsafe { install(root, new_root_untyped(0x1000, 0x5000)) }.unwrap();
+    let src = unsafe { new_root_untyped(root, 0x1000, 0x5000) }.unwrap();
     // Put an Untyped in dst slot to make it non-Null.
-    unsafe { install(root, new_root_untyped(0x8000, 0x9000)) }.unwrap(); // slot 1
+    unsafe { new_root_untyped(root, 0x8000, 0x9000) }.unwrap(); // slot 1
     let dst = idx(1); // now occupied
 
     let err = unsafe { carve(root, src, dst, 0x1000, 0x2000) }.unwrap_err();
@@ -84,7 +83,7 @@ fn carve_out_of_bounds_rejected() {
     let (mut root_box, _slots) = unsafe { make_cspace() };
     let root = root_nn(&mut root_box);
 
-    let src = unsafe { install(root, new_root_untyped(0x1000, 0x5000)) }.unwrap();
+    let src = unsafe { new_root_untyped(root, 0x1000, 0x5000) }.unwrap();
     let dst = idx(1);
 
     // Range starts before parent.
@@ -101,7 +100,7 @@ fn carve_overlap_rejected() {
     let (mut root_box, _slots) = unsafe { make_cspace() };
     let root = root_nn(&mut root_box);
 
-    let src = unsafe { install(root, new_root_untyped(0x1000, 0x5000)) }.unwrap();
+    let src = unsafe { new_root_untyped(root, 0x1000, 0x5000) }.unwrap();
     let dst1 = idx(1);
     let dst2 = idx(2);
 
@@ -117,7 +116,7 @@ fn carve_non_overlapping_siblings() {
     let (mut root_box, _slots) = unsafe { make_cspace() };
     let root = root_nn(&mut root_box);
 
-    let src = unsafe { install(root, new_root_untyped(0x1000, 0x5000)) }.unwrap();
+    let src = unsafe { new_root_untyped(root, 0x1000, 0x5000) }.unwrap();
     let dst1 = idx(1);
     let dst2 = idx(2);
 
@@ -141,7 +140,7 @@ fn alias_creates_untyped_child() {
     let (mut root_box, _slots) = unsafe { make_cspace() };
     let root = root_nn(&mut root_box);
 
-    let src = unsafe { install(root, new_root_untyped(0x1000, 0x5000)) }.unwrap();
+    let src = unsafe { new_root_untyped(root, 0x1000, 0x5000) }.unwrap();
     let dst = idx(1);
 
     unsafe { alias(root, src, dst, 0x1000, 0x3000) }.unwrap();
@@ -155,7 +154,7 @@ fn alias_allows_overlap_with_alias() {
     let (mut root_box, _slots) = unsafe { make_cspace() };
     let root = root_nn(&mut root_box);
 
-    let src = unsafe { install(root, new_root_untyped(0x1000, 0x5000)) }.unwrap();
+    let src = unsafe { new_root_untyped(root, 0x1000, 0x5000) }.unwrap();
     let dst1 = idx(1);
     let dst2 = idx(2);
 
@@ -174,7 +173,7 @@ fn alias_rejects_overlap_with_carved() {
     let (mut root_box, _slots) = unsafe { make_cspace() };
     let root = root_nn(&mut root_box);
 
-    let src = unsafe { install(root, new_root_untyped(0x1000, 0x5000)) }.unwrap();
+    let src = unsafe { new_root_untyped(root, 0x1000, 0x5000) }.unwrap();
     let dst1 = idx(1);
     let dst2 = idx(2);
 
@@ -191,7 +190,7 @@ fn revoke_deletes_direct_children() {
     let (mut root_box, _slots) = unsafe { make_cspace() };
     let root = root_nn(&mut root_box);
 
-    let src = unsafe { install(root, new_root_untyped(0x1000, 0x5000)) }.unwrap();
+    let src = unsafe { new_root_untyped(root, 0x1000, 0x5000) }.unwrap();
     let dst1 = idx(1);
     let dst2 = idx(2);
 
@@ -221,7 +220,7 @@ fn revoke_deletes_grandchildren() {
     let (mut root_box, _slots) = unsafe { make_cspace() };
     let root = root_nn(&mut root_box);
 
-    let src = unsafe { install(root, new_root_untyped(0x1000, 0x5000)) }.unwrap();
+    let src = unsafe { new_root_untyped(root, 0x1000, 0x5000) }.unwrap();
     let dst1 = idx(1);
     let dst2 = idx(2);
 
@@ -247,7 +246,7 @@ fn revoke_resets_watermark_allows_recarve() {
     let (mut root_box, _slots) = unsafe { make_cspace() };
     let root = root_nn(&mut root_box);
 
-    let src = unsafe { install(root, new_root_untyped(0x1000, 0x5000)) }.unwrap();
+    let src = unsafe { new_root_untyped(root, 0x1000, 0x5000) }.unwrap();
     let dst = idx(1);
 
     unsafe { carve(root, src, dst, 0x1000, 0x2000) }.unwrap();
@@ -272,7 +271,7 @@ fn revoke_stops_at_sibling() {
     let (mut root_box, _slots) = unsafe { make_cspace() };
     let root = root_nn(&mut root_box);
 
-    let src = unsafe { install(root, new_root_untyped(0x1000, 0x5000)) }.unwrap();
+    let src = unsafe { new_root_untyped(root, 0x1000, 0x5000) }.unwrap();
     let dst1 = idx(1);
     let dst2 = idx(2);
 
@@ -302,7 +301,7 @@ fn revoke_parent_after_revoking_middle_child() {
     let (mut root_box, _slots) = unsafe { make_cspace() };
     let root = root_nn(&mut root_box);
 
-    let src = unsafe { install(root, new_root_untyped(0x1000, 0x5000)) }.unwrap();
+    let src = unsafe { new_root_untyped(root, 0x1000, 0x5000) }.unwrap();
     let dst1 = idx(1);
     let dst2 = idx(2);
     let dst3 = idx(3);
