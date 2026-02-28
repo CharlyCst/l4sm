@@ -170,6 +170,15 @@ impl CNodeCapa {
         1usize << self.slots
     }
 
+    /// Returns the `CapaIdx` that addresses `slot_idx` in this single-level CNode.
+    ///
+    /// Bit layout (MSB first): `[guard (guard_size bits)] [slot_idx (slots bits)] [zeros]`
+    pub(crate) fn capaidx_for(&self, slot_idx: usize) -> CapaIdx {
+        let guard_shift = usize::BITS as u8 - self.guard_size;
+        let slot_shift = usize::BITS as u8 - self.guard_size - self.slots;
+        CapaIdx((self.guard << guard_shift) | (slot_idx << slot_shift))
+    }
+
     /// Bounds-checks `index`, returning `CNodeInvalidIndex` if out of range.
     const fn bound_check(&self, index: usize) -> Result<(), CapaError> {
         if index < self.nb_slots() {

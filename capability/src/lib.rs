@@ -12,7 +12,7 @@ mod untyped;
 
 pub(crate) use cdt::{direct_untyped_children, find_insert_after, CdtNode};
 use cnode::CNodeCapa;
-use untyped::UntypedCapa;
+use untyped::{UntypedCapa, UntypedKind};
 
 // ————————————————————————————————— Errors ————————————————————————————————— //
 
@@ -51,7 +51,8 @@ pub enum CapaError {
 /// A capability index, represents an address in capability space (CSpace).
 // r[cspace.capaidx]
 #[repr(transparent)]
-pub struct CapaIdx(usize);
+#[derive(Copy, Clone, Debug)]
+pub struct CapaIdx(pub usize);
 
 /// A capability, as stored in a CNode.
 // r[cdt.structure.embedded]
@@ -81,6 +82,59 @@ impl Capa {
             Capa::CNode(_, cdt_node) => Some(cdt_node),
             Capa::Untyped(_, cdt_node) => Some(cdt_node),
         }
+    }
+}
+
+// ————————————————————————————— Bootstrap API —————————————————————————————— //
+
+/// Creates a root CNode capability (depth 0, not linked into any CDT).
+///
+/// # Safety
+///
+/// `address` must point to a valid allocation of at least `2^slots` [`Capa`] values, all
+/// initialized to [`Capa::Null`]. The allocation must remain valid for the lifetime of the
+/// returned capability and will not be freed by it. See [`CNodeCapa::new`] for full requirements.
+pub unsafe fn new_root_cnode(
+    address: NonNull<Capa>,
+    slots: u8,
+    guard: usize,
+    guard_size: u8,
+) -> Capa {
+    Capa::CNode(
+        unsafe { CNodeCapa::new(address, slots, guard, guard_size) },
+        CdtNode::unlinked(0),
+    )
+}
+
+/// Creates a root untyped memory capability covering `[start, end)` (depth 0, not linked into
+/// any CDT).
+pub fn new_root_untyped(start: usize, end: usize) -> Capa {
+    Capa::Untyped(
+        UntypedCapa::new(start, end, UntypedKind::Carved),
+        CdtNode::unlinked(0),
+    )
+}
+
+/// Inserts `capa` into the first free `Null` slot of the root CNode and returns its [`CapaIdx`].
+///
+/// # Safety
+///
+/// `root` must be a valid, non-aliased pointer to a `Capa::CNode`.
+pub unsafe fn install(root: NonNull<Capa>, capa: Capa) -> Result<CapaIdx, CapaError> {
+    let root_cnode = unsafe { as_cnode(root) }?;
+    let slot_idx = root_cnode.insert(capa)?;
+    Ok(root_cnode.capaidx_for(slot_idx))
+}
+
+/// Returns a shared reference to the capability at `idx` in the CSpace rooted at `root`.
+///
+/// # Safety
+///
+/// `root` must be a valid pointer to a `Capa::CNode` that outlives the returned reference.
+pub unsafe fn lookup<'a>(root: NonNull<Capa>, idx: CapaIdx) -> Result<&'a Capa, CapaError> {
+    match unsafe { root.as_ref() } {
+        Capa::CNode(cnode, _) => cnode.resolve(idx),
+        _ => Err(CapaError::InvalidCapaType),
     }
 }
 
